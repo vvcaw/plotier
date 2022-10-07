@@ -85,7 +85,10 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
         .stroke()
         .weight(3.0)
         .color(nannou::prelude::WHITE)
-        .events(approximate_function_splice_as_bezier(rescaled_unit, -5.0, 5.0, 1.0, 3.0, -6.0, 0.0).iter());
+        .events(
+            approximate_function_splice_as_bezier(rescaled_unit, -5.0, 5.0, 1.0, 3.0, -6.0, 0.0)
+                .iter(),
+        );
 
     draw.to_frame(app, &frame).unwrap();
     model.egui.draw_to_frame(&frame).unwrap();
@@ -131,17 +134,20 @@ fn approximate_function_splice_as_bezier(
     // first & last control point.
     nannou::geom::path()
         .begin(nannou::geom::Point2::new(
-            rescaled_unit * approximation_start,
-            rescaled_unit * blossom(
-                approximation_start,
-                approximation_start,
-                approximation_start,
-            ),
+            rescaled_unit * approximation_start, // TODO: This does not work for 0.0, 0.0 for some
+            // reason
+            rescaled_unit
+                * blossom(
+                    approximation_start,
+                    approximation_start,
+                    approximation_start,
+                ),
         ))
         .cubic_bezier_to(
             nannou::geom::Point2::new(
                 rescaled_unit * t(approximation_start, approximation_start, approximation_end),
-                rescaled_unit * blossom(approximation_start, approximation_start, approximation_end),
+                rescaled_unit
+                    * blossom(approximation_start, approximation_start, approximation_end),
             ),
             nannou::geom::Point2::new(
                 rescaled_unit * t(approximation_start, approximation_end, approximation_end),
