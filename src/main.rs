@@ -3,7 +3,8 @@ fn main() {
 }
 
 struct Settings {
-    units_x_axis: u64,
+    units_x_axis: u32,
+    units_y_axis: u32
 }
 
 struct Model {
@@ -23,7 +24,7 @@ fn model(app: &nannou::App) -> Model {
 
     let egui = nannou_egui::Egui::from_window(&window);
 
-    let settings = Settings { units_x_axis: 20 };
+    let settings = Settings { units_x_axis: 20, units_y_axis: 20 };
 
     Model { egui, settings }
 }
@@ -41,7 +42,14 @@ fn update(_app: &nannou::App, model: &mut Model, update: nannou::prelude::Update
         ui.add(nannou_egui::egui::Slider::new(
             &mut settings.units_x_axis,
             1..=100,
-        ))
+        ));
+        
+        // Coordinate system slider for y-axis
+        ui.label("Units in y direction:");
+        ui.add(nannou_egui::egui::Slider::new(
+            &mut settings.units_y_axis,
+            1..=100,
+        ));
     });
 }
 
@@ -78,7 +86,8 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
             nannou::prelude::Vec2::new(0.0, (app.window_rect().h() / 2.0) - 10.0),
         );
 
-    let rescaled_unit = app.window_rect().w() / model.settings.units_x_axis as f32;
+    let rescaled_x_unit = app.window_rect().w() / model.settings.units_x_axis as f32;
+    let rescaled_y_unit = app.window_rect().h() / model.settings.units_y_axis as f32;
 
     // Render bezier curve to approximate function
     draw.path()
@@ -86,7 +95,7 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
         .weight(3.0)
         .color(nannou::prelude::WHITE)
         .events(
-            approximate_function_splice_as_bezier(rescaled_unit, -5.0, 5.0, 1.0, 3.0, -6.0, 0.0)
+            approximate_function_splice_as_bezier(rescaled_x_unit, rescaled_y_unit, -5.0, 5.0, 1.0, 3.0, -6.0, 0.0)
                 .iter(),
         );
 
@@ -95,7 +104,8 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
 }
 
 fn approximate_function_splice_as_bezier(
-    rescaled_unit: f32,
+    rescaled_x_unit: f32,
+    rescaled_y_unit: f32,
     approximation_start: f32,
     approximation_end: f32,
     c0: f32,
@@ -134,9 +144,9 @@ fn approximate_function_splice_as_bezier(
     // first & last control point.
     nannou::geom::path()
         .begin(nannou::geom::Point2::new(
-            rescaled_unit * approximation_start, // TODO: This does not work for 0.0, 0.0 for some
+            rescaled_x_unit * approximation_start, // TODO: This does not work for 0.0, 0.0 for some
             // reason
-            rescaled_unit
+            rescaled_y_unit
                 * blossom(
                     approximation_start,
                     approximation_start,
@@ -145,17 +155,17 @@ fn approximate_function_splice_as_bezier(
         ))
         .cubic_bezier_to(
             nannou::geom::Point2::new(
-                rescaled_unit * t(approximation_start, approximation_start, approximation_end),
-                rescaled_unit
+                rescaled_x_unit * t(approximation_start, approximation_start, approximation_end),
+                rescaled_y_unit
                     * blossom(approximation_start, approximation_start, approximation_end),
             ),
             nannou::geom::Point2::new(
-                rescaled_unit * t(approximation_start, approximation_end, approximation_end),
-                rescaled_unit * blossom(approximation_start, approximation_end, approximation_end),
+                rescaled_x_unit * t(approximation_start, approximation_end, approximation_end),
+                rescaled_y_unit * blossom(approximation_start, approximation_end, approximation_end),
             ),
             nannou::geom::Point2::new(
-                rescaled_unit * approximation_end,
-                rescaled_unit * blossom(approximation_end, approximation_end, approximation_end),
+                rescaled_x_unit * approximation_end,
+                rescaled_y_unit * blossom(approximation_end, approximation_end, approximation_end),
             ),
         )
         .build()
