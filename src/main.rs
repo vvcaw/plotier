@@ -1,10 +1,17 @@
+mod linear_solver;
+
 fn main() {
     nannou::app(model).update(update).run();
+    println!("{:#?}", linear_solver::gaussian_elimination(vec![
+        vec![2.0, 1.0, -1.0, 8.0],
+        vec![-3.0, -1.0, 2.0, -11.0],
+        vec![-2.0, 1.0, 2.0, -3.0],
+    ]));
 }
 
 struct Settings {
     units_x_axis: u32,
-    units_y_axis: u32
+    units_y_axis: u32,
 }
 
 struct Model {
@@ -24,7 +31,10 @@ fn model(app: &nannou::App) -> Model {
 
     let egui = nannou_egui::Egui::from_window(&window);
 
-    let settings = Settings { units_x_axis: 20, units_y_axis: 20 };
+    let settings = Settings {
+        units_x_axis: 20,
+        units_y_axis: 20,
+    };
 
     Model { egui, settings }
 }
@@ -43,7 +53,7 @@ fn update(_app: &nannou::App, model: &mut Model, update: nannou::prelude::Update
             &mut settings.units_x_axis,
             1..=100,
         ));
-        
+
         // Coordinate system slider for y-axis
         ui.label("Units in y direction:");
         ui.add(nannou_egui::egui::Slider::new(
@@ -95,8 +105,17 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
         .weight(3.0)
         .color(nannou::prelude::WHITE)
         .events(
-            approximate_function_splice_as_bezier(rescaled_x_unit, rescaled_y_unit, -5.0, 5.0, 1.0, 3.0, -6.0, 0.0)
-                .iter(),
+            approximate_function_splice_as_bezier(
+                rescaled_x_unit,
+                rescaled_y_unit,
+                -5.0,
+                5.0,
+                1.0,
+                3.0,
+                -6.0,
+                0.0,
+            )
+            .iter(),
         );
 
     draw.to_frame(app, &frame).unwrap();
@@ -161,7 +180,8 @@ fn approximate_function_splice_as_bezier(
             ),
             nannou::geom::Point2::new(
                 rescaled_x_unit * t(approximation_start, approximation_end, approximation_end),
-                rescaled_y_unit * blossom(approximation_start, approximation_end, approximation_end),
+                rescaled_y_unit
+                    * blossom(approximation_start, approximation_end, approximation_end),
             ),
             nannou::geom::Point2::new(
                 rescaled_x_unit * approximation_end,
