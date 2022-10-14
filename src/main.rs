@@ -2,11 +2,6 @@ mod linear_solver;
 
 fn main() {
     nannou::app(model).update(update).run();
-    println!("{:#?}", linear_solver::gaussian_elimination(vec![
-        vec![2.0, 1.0, -1.0, 8.0],
-        vec![-3.0, -1.0, 2.0, -11.0],
-        vec![-2.0, 1.0, 2.0, -3.0],
-    ]));
 }
 
 struct Settings {
@@ -99,24 +94,39 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
     let rescaled_x_unit = app.window_rect().w() / model.settings.units_x_axis as f32;
     let rescaled_y_unit = app.window_rect().h() / model.settings.units_y_axis as f32;
 
-    // Render bezier curve to approximate function
-    draw.path()
-        .stroke()
-        .weight(3.0)
-        .color(nannou::prelude::WHITE)
-        .events(
-            approximate_function_splice_as_bezier(
-                rescaled_x_unit,
-                rescaled_y_unit,
-                -5.0,
-                5.0,
-                1.0,
-                3.0,
-                -6.0,
-                0.0,
-            )
-            .iter(),
-        );
+    let points = vec![
+        (0.0, 21.0),
+        (1.0, 24.0),
+        (2.0, 24.0),
+        (3.0, 18.0),
+        (4.0, 16.0),
+    ];
+
+    let matrix = linear_solver::generate_linear_system(&points);
+
+    let gaussian_elimination = linear_solver::gaussian_elimination(matrix);
+
+    // Get four coefficients each and draw bezier curve.
+    for (polynomial_num, chunk) in gaussian_elimination.chunks(4).enumerate() {
+        // Render bezier curve to approximate function
+        draw.path()
+            .stroke()
+            .weight(3.0)
+            .color(nannou::prelude::WHITE)
+            .events(
+                approximate_function_splice_as_bezier(
+                    rescaled_x_unit,
+                    rescaled_y_unit,
+                    points[polynomial_num].0,
+                    points[polynomial_num + 1].0,
+                    chunk[0],
+                    chunk[1],
+                    chunk[2],
+                    chunk[3],
+                )
+                .iter(),
+            );
+    }
 
     draw.to_frame(app, &frame).unwrap();
     model.egui.draw_to_frame(&frame).unwrap();
