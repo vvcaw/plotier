@@ -129,6 +129,15 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
             );
     }
 
+    // Render the points
+    for (x, y) in &points {
+        draw.ellipse()
+            .color(nannou::prelude::GREEN)
+            .radius(10.0)
+            .x(rescaled_x_unit * (*x))
+            .y(rescaled_y_unit * (*y));
+    }
+
     draw.to_frame(app, &frame).unwrap();
     model.egui.draw_to_frame(&frame).unwrap();
 }
