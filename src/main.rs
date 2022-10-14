@@ -113,6 +113,7 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
             .stroke()
             .weight(3.0)
             .color(nannou::prelude::WHITE)
+            .tolerance(1.0 / app.window_rect().w() * 0.01) // Adjust tolerance to fix path not rendering in certain instances.
             .events(
                 approximate_function_splice_as_bezier(
                     rescaled_x_unit,
