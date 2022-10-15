@@ -1,3 +1,4 @@
+mod eval_function;
 mod linear_solver;
 
 fn main() {
@@ -7,6 +8,8 @@ fn main() {
 struct Settings {
     units_x_axis: u32,
     units_y_axis: u32,
+    sample_point_count: u32,
+    function_str: String,
 }
 
 struct Model {
@@ -29,6 +32,8 @@ fn model(app: &nannou::App) -> Model {
     let settings = Settings {
         units_x_axis: 20,
         units_y_axis: 20,
+        sample_point_count: 10,
+        function_str: "sin(x)".to_string(),
     };
 
     Model { egui, settings }
@@ -54,6 +59,19 @@ fn update(_app: &nannou::App, model: &mut Model, update: nannou::prelude::Update
         ui.add(nannou_egui::egui::Slider::new(
             &mut settings.units_y_axis,
             1..=100,
+        ));
+
+        // Slider for sample point count
+        ui.label("Sample point count:");
+        ui.add(nannou_egui::egui::Slider::new(
+            &mut settings.sample_point_count,
+            2..=19,
+        ));
+
+        // Input for function
+        ui.label("Function:");
+        ui.add(nannou_egui::egui::TextEdit::singleline(
+            &mut settings.function_str,
         ));
     });
 }
@@ -94,48 +112,49 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
     let rescaled_x_unit = app.window_rect().w() / model.settings.units_x_axis as f32;
     let rescaled_y_unit = app.window_rect().h() / model.settings.units_y_axis as f32;
 
-    let points = vec![
-        (0.0, 21.0),
-        (1.0, 24.0),
-        (2.0, 24.0),
-        (3.0, 18.0),
-        (4.0, 16.0),
-    ];
+    let points = eval_function::sample_points_for_function(
+        &model.settings.function_str.as_str(),
+        model.settings.sample_point_count,
+        model.settings.units_x_axis,
+    );
 
-    let matrix = linear_solver::generate_linear_system(&points);
+    // Don't draw if no points are evaluted
+    if !points.is_empty() {
+        let matrix = linear_solver::generate_linear_system(&points);
 
-    let gaussian_elimination = linear_solver::gaussian_elimination(matrix);
+        let gaussian_elimination = linear_solver::gaussian_elimination(matrix);
 
-    // Get four coefficients each and draw bezier curve.
-    for (polynomial_num, chunk) in gaussian_elimination.chunks(4).enumerate() {
-        // Render bezier curve to approximate function
-        draw.path()
-            .stroke()
-            .weight(3.0)
-            .color(nannou::prelude::WHITE)
-            .tolerance(1.0 / app.window_rect().w() * 0.01) // Adjust tolerance to fix path not rendering in certain instances.
-            .events(
-                approximate_function_splice_as_bezier(
-                    rescaled_x_unit,
-                    rescaled_y_unit,
-                    points[polynomial_num].0,
-                    points[polynomial_num + 1].0,
-                    chunk[0],
-                    chunk[1],
-                    chunk[2],
-                    chunk[3],
-                )
-                .iter(),
-            );
-    }
+        // Get four coefficients each and draw bezier curve.
+        for (polynomial_num, chunk) in gaussian_elimination.chunks(4).enumerate() {
+            // Render bezier curve to approximate function
+            draw.path()
+                .stroke()
+                .weight(3.0)
+                .color(nannou::prelude::WHITE)
+                .tolerance(1.0 / app.window_rect().w() * 0.01) // Adjust tolerance to fix path not rendering in certain instances.
+                .events(
+                    approximate_function_splice_as_bezier(
+                        rescaled_x_unit,
+                        rescaled_y_unit,
+                        points[polynomial_num].0,
+                        points[polynomial_num + 1].0,
+                        chunk[0],
+                        chunk[1],
+                        chunk[2],
+                        chunk[3],
+                    )
+                    .iter(),
+                );
+        }
 
-    // Render the points
-    for (x, y) in &points {
-        draw.ellipse()
-            .color(nannou::prelude::GREEN)
-            .radius(10.0)
-            .x(rescaled_x_unit * (*x))
-            .y(rescaled_y_unit * (*y));
+        // Render the points
+        for (x, y) in &points {
+            draw.ellipse()
+                .color(nannou::prelude::GREEN)
+                .radius(10.0)
+                .x(rescaled_x_unit * (*x))
+                .y(rescaled_y_unit * (*y));
+        }
     }
 
     draw.to_frame(app, &frame).unwrap();
