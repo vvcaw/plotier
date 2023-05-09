@@ -1,5 +1,5 @@
 /// Values passed to this function should be sorted in order.
-pub fn generate_linear_system(points: &Vec<(f32, f32)>) -> Vec<Vec<f32>> {
+pub fn generate_linear_system(points: &Vec<(f64, f64)>) -> Vec<Vec<f64>> {
     let polynomial_count = points.len() - 1;
 
     // Multiplicate by 4 as we have 4 coefficients.
@@ -57,7 +57,7 @@ pub fn generate_linear_system(points: &Vec<(f32, f32)>) -> Vec<Vec<f32>> {
     matrix
 }
 
-pub fn gaussian_elimination(mut matrix: Vec<Vec<f32>>) -> Vec<f32> {
+pub fn gaussian_elimination(mut matrix: Vec<Vec<f64>>) -> Vec<f64> {
     let matrix_length = matrix.len();
 
     (0..matrix_length).for_each(|column_index| {
@@ -82,7 +82,7 @@ pub fn gaussian_elimination(mut matrix: Vec<Vec<f32>>) -> Vec<f32> {
         });
     });
 
-    let mut solution: Vec<f32> = vec![];
+    let mut solution: Vec<f64> = vec![];
 
     (0..matrix_length).rev().for_each(|column_index| {
         // Note that matrix_length always has to be the length of a row in gaussian elimination.

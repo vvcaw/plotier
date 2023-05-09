@@ -134,8 +134,8 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
                 .tolerance(1.0 / app.window_rect().w() * 0.01) // Adjust tolerance to fix path not rendering in certain instances.
                 .events(
                     approximate_function_splice_as_bezier(
-                        rescaled_x_unit,
-                        rescaled_y_unit,
+                        rescaled_x_unit as f64,
+                        rescaled_y_unit as f64,
                         points[polynomial_num].0,
                         points[polynomial_num + 1].0,
                         chunk[0],
@@ -152,8 +152,8 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
             draw.ellipse()
                 .color(nannou::prelude::GREEN)
                 .radius(10.0)
-                .x(rescaled_x_unit * (*x))
-                .y(rescaled_y_unit * (*y));
+                .x(rescaled_x_unit * ((*x) as f32))
+                .y(rescaled_y_unit * ((*y) as f32));
         }
     }
 
@@ -162,20 +162,20 @@ fn view(app: &nannou::App, model: &Model, frame: nannou::prelude::Frame) {
 }
 
 fn approximate_function_splice_as_bezier(
-    rescaled_x_unit: f32,
-    rescaled_y_unit: f32,
-    approximation_start: f32,
-    approximation_end: f32,
-    c0: f32,
-    c1: f32,
-    c2: f32,
-    c3: f32,
+    rescaled_x_unit: f64,
+    rescaled_y_unit: f64,
+    approximation_start: f64,
+    approximation_end: f64,
+    c0: f64,
+    c1: f64,
+    c2: f64,
+    c3: f64,
 ) -> nannou::geom::Path {
     // For approximating the part of the polynomial of degree 3, we need to create a blossom
     // (symettric + multi-affine) function that satisfies G(t, t, t) = F(t) for all t.
 
     // Create function t
-    fn t(u: f32, v: f32, w: f32) -> f32 {
+    fn t(u: f64, v: f64, w: f64) -> f64 {
         (u + v + w) / 3.0
     }
 
@@ -183,7 +183,7 @@ fn approximate_function_splice_as_bezier(
     // Replace t^3 with u * v * w
     // Replace t^2 with (1.0 / 3.0) * (vw + wu + uv)
     // Replace t with (1.0 / 3.0) * (u + v + w)
-    let blossom = |u: f32, v: f32, w: f32| {
+    let blossom = |u: f64, v: f64, w: f64| {
         c0 * (u * v * w)
             + c1 * (((v * w) + (w * u) + (u * v)) / 3.0)
             + c2 * ((u + v + w) / 3.0)
@@ -202,29 +202,29 @@ fn approximate_function_splice_as_bezier(
     // first & last control point.
     nannou::geom::path()
         .begin(nannou::geom::Point2::new(
-            rescaled_x_unit * approximation_start, // TODO: This does not work for 0.0, 0.0 for some
+            (rescaled_x_unit * approximation_start) as f32, // TODO: This does not work for 0.0, 0.0 for some
             // reason
-            rescaled_y_unit
+            (rescaled_y_unit
                 * blossom(
                     approximation_start,
                     approximation_start,
                     approximation_start,
-                ),
+                )) as f32,
         ))
         .cubic_bezier_to(
             nannou::geom::Point2::new(
-                rescaled_x_unit * t(approximation_start, approximation_start, approximation_end),
-                rescaled_y_unit
-                    * blossom(approximation_start, approximation_start, approximation_end),
+                (rescaled_x_unit * t(approximation_start, approximation_start, approximation_end)) as f32,
+                (rescaled_y_unit
+                    * blossom(approximation_start, approximation_start, approximation_end)) as f32,
             ),
             nannou::geom::Point2::new(
-                rescaled_x_unit * t(approximation_start, approximation_end, approximation_end),
-                rescaled_y_unit
-                    * blossom(approximation_start, approximation_end, approximation_end),
+                (rescaled_x_unit * t(approximation_start, approximation_end, approximation_end)) as f32,
+                (rescaled_y_unit
+                    * blossom(approximation_start, approximation_end, approximation_end)) as f32,
             ),
             nannou::geom::Point2::new(
-                rescaled_x_unit * approximation_end,
-                rescaled_y_unit * blossom(approximation_end, approximation_end, approximation_end),
+                (rescaled_x_unit * approximation_end) as f32,
+                (rescaled_y_unit * blossom(approximation_end, approximation_end, approximation_end)) as f32,
             ),
         )
         .build()
